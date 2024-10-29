@@ -1,4 +1,4 @@
-# Pachinko
+# DROP-JAVA2
 
 A [libGDX](https://libgdx.com/) project generated with [gdx-liftoff](https://github.com/libgdx/gdx-liftoff).
 
@@ -8,6 +8,8 @@ This project was generated with a template including simple application launcher
 
 - `core`: Main module with the application logic shared by all platforms.
 - `lwjgl3`: Primary desktop platform using LWJGL3; was called 'desktop' in older docs.
+- `teavm`: Experimental web platform using TeaVM and WebGL.
+- `lwjgl2`: Legacy desktop platform using LWJGL2.
 
 ## Gradle
 
@@ -25,8 +27,12 @@ Useful Gradle tasks and flags:
 - `clean`: removes `build` folders, which store compiled classes and built archives.
 - `eclipse`: generates Eclipse project data.
 - `idea`: generates IntelliJ project data.
+- `lwjgl2:jar`: builds application's runnable jar, which can be found at `lwjgl2/build/libs`.
+- `lwjgl2:run`: starts the application.
 - `lwjgl3:jar`: builds application's runnable jar, which can be found at `lwjgl3/build/libs`.
 - `lwjgl3:run`: starts the application.
+- `teavm:build`: builds the JavaScript application into the build/dist/webapp folder.
+- `teavm:run`: serves the JavaScript application at http://localhost:8080 via a local Jetty server.
 - `test`: runs unit tests (if any).
 
 Note that most tasks that are not specific to a single project can be run with `name:` prefix, where the `name` should be replaced with the ID of a specific project.
