@@ -2,12 +2,23 @@
 eclipse.project.name = appName + '-core'
 
 dependencies {
+<<<<<<< HEAD
   api "com.badlogicgames.box2dlights:box2dlights:$box2dlightsVersion"
   api "com.badlogicgames.gdx-controllers:gdx-controllers-core:$gdxControllersVersion"
   api "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
   api "com.badlogicgames.gdx:gdx-bullet:$gdxVersion"
   api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
   api "com.badlogicgames.gdx:gdx:$gdxVersion"
+=======
+  api "com.badlogicgames.ashley:ashley:$ashleyVersion"
+  api "com.badlogicgames.box2dlights:box2dlights:$box2dlightsVersion"
+  api "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
+  api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
+  api "com.badlogicgames.gdx:gdx:$gdxVersion"
+  api "com.github.tommyettinger:libgdx-utils-box2d:$utilsBox2dVersion"
+  api "com.github.tommyettinger:libgdx-utils:$utilsVersion"
+  api "org.apache.groovy:groovy-all:$groovyVersion"
+>>>>>>> 5e9fd28 (Initial commit)
 
   if(enableGraalNative == 'true') {
     implementation "io.github.berstanio:gdx-svmhelper-annotations:$graalHelperVersion"

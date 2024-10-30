@@ -18,7 +18,11 @@ plugins {
 import io.github.fourlastor.construo.Target
 
 sourceSets.main.resources.srcDirs += [ rootProject.file('assets').path ]
+<<<<<<< HEAD
 mainClassName = 'io.github.some_example_name.lwjgl3.Lwjgl3Launcher'
+=======
+mainClassName = 'io.com.saehee.mygame.lwjgl3.Lwjgl3Launcher'
+>>>>>>> 5e9fd28 (Initial commit)
 application.setMainClass(mainClassName)
 eclipse.project.name = appName + '-lwjgl3'
 java.sourceCompatibility = 11
@@ -28,10 +32,15 @@ if (JavaVersion.current().isJava9Compatible()) {
 }
 
 dependencies {
+<<<<<<< HEAD
   implementation "com.badlogicgames.gdx-controllers:gdx-controllers-desktop:$gdxControllersVersion"
   implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
   implementation "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop"
   implementation "com.badlogicgames.gdx:gdx-bullet-platform:$gdxVersion:natives-desktop"
+=======
+  implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+  implementation "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop"
+>>>>>>> 5e9fd28 (Initial commit)
   implementation "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
   implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
   implementation project(':core')
@@ -40,7 +49,10 @@ dependencies {
   if(enableGraalNative == 'true') {
     implementation "io.github.berstanio:gdx-svmhelper-backend-lwjgl3:$graalHelperVersion"
       implementation "io.github.berstanio:gdx-svmhelper-extension-box2d:$graalHelperVersion"
+<<<<<<< HEAD
       implementation "io.github.berstanio:gdx-svmhelper-extension-bullet:$graalHelperVersion"
+=======
+>>>>>>> 5e9fd28 (Initial commit)
       implementation "io.github.berstanio:gdx-svmhelper-extension-freetype:$graalHelperVersion"
     }
 
@@ -94,7 +106,11 @@ construo {
         architecture.set(Target.Architecture.AARCH64)
         jdkUrl.set("https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.12%2B7/OpenJDK17U-jdk_aarch64_mac_hotspot_17.0.12_7.tar.gz")
         // macOS needs an identifier
+<<<<<<< HEAD
         identifier.set("io.github.some_example_name." + appName)
+=======
+        identifier.set("io.com.saehee.mygame." + appName)
+>>>>>>> 5e9fd28 (Initial commit)
         // Optional: icon for macOS
         macIcon.set(project.file("icons/logo.icns"))
       }
@@ -102,7 +118,11 @@ construo {
         architecture.set(Target.Architecture.X86_64)
         jdkUrl.set("https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.12%2B7/OpenJDK17U-jdk_x64_mac_hotspot_17.0.12_7.tar.gz")
         // macOS needs an identifier
+<<<<<<< HEAD
         identifier.set("io.github.some_example_name." + appName)
+=======
+        identifier.set("io.com.saehee.mygame." + appName)
+>>>>>>> 5e9fd28 (Initial commit)
         // Optional: icon for macOS
         macIcon.set(project.file("icons/logo.icns"))
       }
