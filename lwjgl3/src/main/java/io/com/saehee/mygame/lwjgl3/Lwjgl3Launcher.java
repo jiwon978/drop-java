@@ -17,7 +17,7 @@ public class Lwjgl3Launcher {
     private static Lwjgl3ApplicationConfiguration getDefaultConfiguration() {
         Lwjgl3ApplicationConfiguration configuration = new Lwjgl3ApplicationConfiguration();
         configuration.setTitle("DROP-JAVA");
-        configuration.setWindowedMode(1280, 720); // 16:9 비율 설정 (1280x720)
+        configuration.setWindowedMode(720, 960); // 16:9 비율 설정 (1280x720)
         configuration.useVsync(true);
         configuration.setForegroundFPS(60); // 60 FPS 제한
         configuration.setResizable(false); // 창 크기 고정

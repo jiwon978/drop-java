@@ -4,88 +4,136 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.BodyDef;
-import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
-import com.badlogic.gdx.physics.box2d.CircleShape;
-import com.badlogic.gdx.physics.box2d.FixtureDef;
-import com.badlogic.gdx.physics.box2d.PolygonShape;
-import com.badlogic.gdx.physics.box2d.World;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class javagdx extends ApplicationAdapter {
 
+	private static final float VIRTUAL_WIDTH = 720; // 가로
+	private static final float VIRTUAL_HEIGHT = 960; // 세로
+    private static final float SCALE = 1 / 100f; // 픽셀 -> Box2D 변환 비율
+
     private Stage stage;
     private Skin skin;
-    private int currentMapIndex = 0;
-    private static final float VIRTUAL_WIDTH = 1280;
-    private static final float VIRTUAL_HEIGHT = 720;
     private SpriteBatch batch;
     private World world;
-    private Box2DDebugRenderer debugRenderer;
+    private ShapeRenderer shapeRenderer;
     private Texture ballTexture;
-    private Texture backgroundTexture;  // 배경 텍스처 추가
     private List<Body> balls;
+    private boolean isGameStarted = false;
+    private boolean isAboutScreen = false;
+
+    private OrthographicCamera camera;
+    private Viewport viewport;
+
+    private Animation<Texture> backgroundAnimation;
+    private float elapsedTime = 0f; // 경과 시간
+
+    private Body playButtonBody;
+    private Body aboutButtonBody;
+    private Body exitButtonBody;
+    private boolean showButtonBorders = true;
 
     @Override
     public void create() {
-        stage = new Stage(new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT));
+        camera = new OrthographicCamera();
+        viewport = new FitViewport(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, camera);
+        camera.position.set(VIRTUAL_WIDTH / 2, VIRTUAL_HEIGHT / 2, 0);
+        camera.update();
+
+        stage = new Stage(viewport);
         Gdx.input.setInputProcessor(stage);
 
-        // 기본 스킨 로드
-        skin = new Skin(Gdx.files.internal("uiskin.json"));
-
-        // 스프라이트 배치 및 텍스처 로드
+        skin = new Skin(Gdx.files.internal("assets/ui/uiskin.json"));
         batch = new SpriteBatch();
-        ballTexture = new Texture(Gdx.files.absolute("C:/Users/user/Documents/DROP-JAVA2/assets/ball.png")); // 절대 경로를 사용해 텍스처 로드
-        backgroundTexture = new Texture(Gdx.files.absolute("C:/Users/user/Documents/DROP-JAVA2/assets/back.jpeg")); // 배경 이미지 절대 경로로 로드
 
-        // 테이블 생성 (UI 배치를 위해 사용)
+        shapeRenderer = new ShapeRenderer();
+        world = new World(new Vector2(0, -4.9f), true); // 중력 설정
+        balls = new ArrayList<>();
+
+        ballTexture = new Texture(Gdx.files.internal("assets/ball.png"));
+
+        // 배경 애니메이션 로드
+        loadBackgroundAnimation();
+
+        // UI 버튼 생성
+        setupUI();
+
+        // 물리 세계에 공 추가
+        for (int i = 0; i < 10; i++) {
+            addBall();
+        }
+    }
+
+    private void loadBackgroundAnimation() {
+        Array<Texture> frames = new Array<>();
+        for (int i = 1; i <= 100; i++) { // 1부터 100까지 파일 로드
+            String fileName = "C:/Users/user/Documents/DROP-JAVA2/assets/" + i + ".jpeg"; // 절대 경로 사용
+            System.out.println("Trying to load: " + fileName); // 디버깅 출력
+            if (Gdx.files.absolute(fileName).exists()) {
+                frames.add(new Texture(Gdx.files.absolute(fileName))); // Texture 로드
+            } else {
+                System.err.println("File not found: " + fileName); // 파일이 없을 경우 경고
+            }
+        }
+
+        if (frames.size > 0) {
+            backgroundAnimation = new Animation<>(0.1f, frames, Animation.PlayMode.LOOP); // 각 프레임 0.1초
+        } else {
+            throw new RuntimeException("No valid image files found for the animation.");
+        }
+    }
+
+    private void setupUI() {
         Table table = new Table();
         table.setFillParent(true);
         stage.addActor(table);
 
-        // 게임 제목 라벨
-        Label titleLabel = new Label("DROP-JAVA", skin);
-        titleLabel.setFontScale(2f);  // 제목 크기 조정
-
-        // 실행 버튼
+        // Play 버튼
         TextButton playButton = new TextButton("Play", skin);
-        playButton.getLabel().setFontScale(1.5f);  // 버튼 글씨 크기 조정
+        playButton.getLabel().setFontScale(1.5f);
         playButton.addListener(new ClickListener() {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
-                // 맵 선택 화면으로 이동
-                showMapSelection();
+                isGameStarted = true;
+                showButtonBorders = false;
+                stage.clear(); // 모든 버튼 제거
+                startGame();
             }
         });
 
-        // 설명 버튼
+        // About 버튼
         TextButton aboutButton = new TextButton("About", skin);
-        aboutButton.getLabel().setFontScale(1.5f);  // 버튼 글씨 크기 조정
+        aboutButton.getLabel().setFontScale(1.5f);
         aboutButton.addListener(new ClickListener() {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
-                // 설명 버튼 클릭 시 공 하나 추가
-                addBall();
+                isAboutScreen = true;
+                showButtonBorders = false;
+                stage.clear(); // 모든 버튼 제거
+                showAboutScreen();
             }
         });
 
-        // 종료 버튼
+        // Exit 버튼
         TextButton exitButton = new TextButton("Exit", skin);
-        exitButton.getLabel().setFontScale(1.5f);  // 버튼 글씨 크기 조정
+        exitButton.getLabel().setFontScale(1.5f);
         exitButton.addListener(new ClickListener() {
             @Override
             public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
@@ -93,157 +141,127 @@ public class javagdx extends ApplicationAdapter {
             }
         });
 
-        // 테이블에 요소 배치
-        table.add(titleLabel).padBottom(40).row();  // 제목 추가 후 줄 바꿈
-        table.add(playButton).padBottom(20).row();  // 실행 버튼 추가 후 줄 바꿈
-        table.add(aboutButton).padBottom(20).row(); // 설명 버튼 추가 후 줄 바꿈
-        table.add(exitButton);                      // 종료 버튼 추가
-
-        // 초기 공 50개 생성
-        world = new World(new Vector2(0, -9.8f), true);
-        debugRenderer = new Box2DDebugRenderer();
-        balls = new ArrayList<>();
-        for (int i = 0; i < 50; i++) {
-            addBall();
-        }
-    }
-
-    private void showMapSelection() {
-        // 맵 선택 화면을 위한 새로운 스테이지 생성
-        stage.clear();
-        Table mapTable = new Table();
-        mapTable.setFillParent(true);
-        stage.addActor(mapTable);
-
-        // 빈 맵 화면 표시 (임시 화면)
-        Label mapLabel = new Label("Select a Map (Placeholder)", skin);
-        mapLabel.setFontScale(2f);
-        mapTable.add(mapLabel).padBottom(40).row();
-
-        // 이전 맵 버튼
-        TextButton previousButton = new TextButton("< Previous", skin);
-        previousButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
-                currentMapIndex = (currentMapIndex - 1 + 3) % 3; // 3개의 맵이 있다고 가정
-                System.out.println("Previous Map: " + currentMapIndex);
-            }
-        });
-
-        // 다음 맵 버튼
-        TextButton nextButton = new TextButton("Next >", skin);
-        nextButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
-                currentMapIndex = (currentMapIndex + 1) % 3; // 3개의 맵이 있다고 가정
-                System.out.println("Next Map: " + currentMapIndex);
-            }
-        });
-
-        // 시작 버튼
-        TextButton startButton = new TextButton("Start Game", skin);
-        startButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
-                // 게임 시작 코드 작성
-                startGame();
-            }
-        });
-
-        // 이전 화면으로 돌아가기 버튼
-        TextButton backButton = new TextButton("Back", skin);
-        backButton.addListener(new ClickListener() {
-            @Override
-            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
-                create(); // 이전 화면으로 돌아가기
-            }
-        });
-
-        // 버튼 배치
-        HorizontalGroup buttonGroup = new HorizontalGroup();
-        buttonGroup.space(20f);
-        buttonGroup.addActor(previousButton);
-        buttonGroup.addActor(startButton);
-        buttonGroup.addActor(nextButton);
-        buttonGroup.addActor(backButton);
-        mapTable.add(buttonGroup);
+        table.add(playButton).size(300, 100).padBottom(20).row();
+        table.add(aboutButton).size(300, 100).padBottom(20).row();
+        table.add(exitButton).size(300, 100);
     }
 
     private void startGame() {
-        // 핀볼 게임 바닥 생성
+        showButtonBorders = false;
+        removeButtonBodies();
+
+        // 바닥 생성
         BodyDef groundBodyDef = new BodyDef();
-        groundBodyDef.position.set(new Vector2(0, -10));
+        groundBodyDef.position.set(new Vector2(VIRTUAL_WIDTH / 2 * SCALE, 10 * SCALE));
         Body groundBody = world.createBody(groundBodyDef);
 
         PolygonShape groundBox = new PolygonShape();
-        groundBox.setAsBox(VIRTUAL_WIDTH, 10.0f);
+        groundBox.setAsBox(VIRTUAL_WIDTH / 2 * SCALE, 10 * SCALE);
         groundBody.createFixture(groundBox, 0.0f);
         groundBox.dispose();
 
-        // 초기 공 10개 생성
+        // 공 추가
         for (int i = 0; i < 10; i++) {
             addBall();
         }
     }
 
+    private void showAboutScreen() {
+        Table aboutTable = new Table();
+        aboutTable.setFillParent(true);
+        stage.addActor(aboutTable);
+
+        TextButton fullscreenButton = new TextButton("Fullscreen", skin);
+        fullscreenButton.getLabel().setFontScale(1.5f);
+        fullscreenButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
+            }
+        });
+
+        TextButton windowedButton = new TextButton("Windowed", skin);
+        windowedButton.getLabel().setFontScale(1.5f);
+        windowedButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                Gdx.graphics.setWindowedMode(1280, 720);
+            }
+        });
+
+        TextButton backButton = new TextButton("Back", skin);
+        backButton.getLabel().setFontScale(1.5f);
+        backButton.addListener(new ClickListener() {
+            @Override
+            public void clicked(com.badlogic.gdx.scenes.scene2d.InputEvent event, float x, float y) {
+                isAboutScreen = false;
+                stage.clear();
+                setupUI(); // 홈 화면으로 돌아가기
+            }
+        });
+
+        aboutTable.add(fullscreenButton).size(300, 100).padBottom(20).row();
+        aboutTable.add(windowedButton).size(300, 100).padBottom(20).row();
+        aboutTable.add(backButton).size(300, 100);
+    }
+
     private void addBall() {
-        if (world != null) {
-            // 공 생성
-            BodyDef ballBodyDef = new BodyDef();
-            ballBodyDef.type = BodyType.DynamicBody;
-            ballBodyDef.position.set((float) (Math.random() * VIRTUAL_WIDTH), VIRTUAL_HEIGHT - 50);
-            Body ball = world.createBody(ballBodyDef);
+        BodyDef ballBodyDef = new BodyDef();
+        ballBodyDef.type = BodyDef.BodyType.DynamicBody;
+        ballBodyDef.position.set((float) Math.random() * VIRTUAL_WIDTH * SCALE, VIRTUAL_HEIGHT * SCALE);
 
-            CircleShape circle = new CircleShape();
-            circle.setRadius(20f);
+        Body ball = world.createBody(ballBodyDef);
 
-            FixtureDef fixtureDef = new FixtureDef();
-            fixtureDef.shape = circle;
-            fixtureDef.density = 2.0f; // 공의 무게 조절
-            fixtureDef.friction = 0.4f;
-            fixtureDef.restitution = 0.8f; // 탄성 증가
+        CircleShape circle = new CircleShape();
+        circle.setRadius(20f * SCALE);
 
-            ball.createFixture(fixtureDef);
-            circle.dispose();
+        FixtureDef fixtureDef = new FixtureDef();
+        fixtureDef.shape = circle;
+        fixtureDef.density = 2.0f;
+        fixtureDef.friction = 0.4f;
+        fixtureDef.restitution = 0.8f;
 
-            balls.add(ball);
+        ball.createFixture(fixtureDef);
+        circle.dispose();
+
+        balls.add(ball);
+    }
+
+    private void removeButtonBodies() {
+        if (playButtonBody != null) {
+            world.destroyBody(playButtonBody);
+        }
+        if (aboutButtonBody != null) {
+            world.destroyBody(aboutButtonBody);
+        }
+        if (exitButtonBody != null) {
+            world.destroyBody(exitButtonBody);
         }
     }
 
     @Override
     public void render() {
-        // 화면을 지우고 배경 이미지 설정
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        batch.begin();
-        batch.draw(backgroundTexture, 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);  // 배경 이미지 그리기
-        batch.end();
+        float deltaTime = Gdx.graphics.getDeltaTime();
+        elapsedTime += deltaTime;
 
-        if (world != null) {
-            // 물리 시뮬레이션 진행
-            world.step(1 / 60f, 6, 2);
+        // 배경 애니메이션
+        if (backgroundAnimation != null) {
+            Texture currentFrame = backgroundAnimation.getKeyFrame(elapsedTime);
+            batch.setProjectionMatrix(camera.combined);
+            batch.begin();
 
-            // 디버그 렌더링 (테스트용)
-            debugRenderer.render(world, stage.getCamera().combined);
+            // 화면 크기에 맞게 배경 이미지 드로잉
+            batch.draw(currentFrame, 0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+
+            batch.end();
         }
 
-        // 스프라이트 배치 시작
-        batch.begin();
-        for (Body ball : balls) {
-            Vector2 position = ball.getPosition();
-            batch.draw(ballTexture, position.x - 20, position.y - 20, 40, 40); // 공의 텍스처 그리기
-        }
-        batch.end();
-
-        // UI 요소들을 렌더링
-        stage.act(Gdx.graphics.getDeltaTime());
+        // 나머지 렌더링 코드
+        stage.act();
         stage.draw();
-    }
-
-    @Override
-    public void resize(int width, int height) {
-        stage.getViewport().update(width, height, true);
     }
 
     @Override
@@ -251,12 +269,13 @@ public class javagdx extends ApplicationAdapter {
         stage.dispose();
         skin.dispose();
         batch.dispose();
+        shapeRenderer.dispose();
         ballTexture.dispose();
-        backgroundTexture.dispose();  // 배경 텍스처 해제
         if (world != null) {
             world.dispose();
-            debugRenderer.dispose();
+        }
+        for (Texture texture : backgroundAnimation.getKeyFrames()) {
+            texture.dispose();
         }
     }
 }
-
